@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detector de Frecuencia y Nota</title>
+  <style>
+    :root {
+      --bg-1: #07111f;
+      --bg-2: #0e2037;
+      --panel: rgba(13, 22, 39, 0.72);
+      --panel-border: rgba(160, 196, 255, 0.14);
+      --text: #eef4ff;
+      --muted: #9fb4d2;
+      --accent: #6ee7ff;
+      --accent-2: #a78bfa;
+      --good: #41f0a8;
+      --warn: #ffd166;
+      --bad: #ff6b8a;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(110, 231, 255, 0.16), transparent 30%),
+        radial-gradient(circle at 80% 10%, rgba(167, 139, 250, 0.18), transparent 28%),
+        radial-gradient(circle at 50% 90%, rgba(65, 240, 168, 0.12), transparent 30%),
+        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+      opacity: 0.45;
+    }
+
+    .wrap {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .title-block h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .title-block p {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .badge {
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      color: #d8e7ff;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 28px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 18%, transparent 85%, rgba(255,255,255,0.03));
+    }
+
+    .panel-inner {
+      padding: 22px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-display {
+      height: 280px;
+      border-radius: 22px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(110, 231, 255, 0.14), transparent 24%),
+        radial-gradient(circle at 30% 30%, rgba(167, 139, 250, 0.18), transparent 28%),
+        radial-gradient(circle at 70% 70%, rgba(65, 240, 168, 0.12), transparent 25%),
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(10px);
+      opacity: 0.9;
+      animation: floatOrb 8s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(110,231,255,0.28), rgba(110,231,255,0.02) 70%);
+      left: 14%;
+      top: 18%;
+    }
+
+    .orb-2 {
+      width: 210px;
+      height: 210px;
+      background: radial-gradient(circle, rgba(167,139,250,0.26), rgba(167,139,250,0.02) 70%);
+      right: 10%;
+      bottom: 10%;
+      animation-delay: -3s;
+    }
+
+    .center-readout {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px 28px;
+      border-radius: 28px;
+      background: rgba(8, 15, 28, 0.34);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      backdrop-filter: blur(10px);
+      min-width: min(100%, 420px);
+    }
+
+    .center-label {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+    }
+
+    .center-freq {
+      font-size: clamp(2.3rem, 6vw, 4.4rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 0.95;
+      text-shadow: 0 0 26px rgba(110, 231, 255, 0.15);
+    }
+
+    .center-note {
+      margin-top: 10px;
+      color: #d9e6ff;
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      font-weight: 600;
+    }
+
+    @keyframes floatOrb {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-10px) scale(1.05); }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .value {
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .big-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .note-card {
+      padding: 20px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(110, 231, 255, 0.16), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(167, 139, 250, 0.16), transparent 32%),
+        rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .note-card .kicker {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    .note-main {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #note {
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      text-shadow: 0 0 30px rgba(110, 231, 255, 0.18);
+    }
+
+    #octave {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      color: #d7dbff;
+      font-weight: 700;
+    }
+
+    .meter-wrap {
+      margin-top: 8px;
+    }
+
+    .meter-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .meter {
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,107,138,0.22), rgba(255,209,102,0.22), rgba(65,240,168,0.22), rgba(255,209,102,0.22), rgba(255,107,138,0.22));
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .meter::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.55);
+      box-shadow: 0 0 12px rgba(255,255,255,0.25);
+    }
+
+    .needle {
+      position: absolute;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 20px rgba(255,255,255,0.45), 0 0 35px rgba(110,231,255,0.22);
+      left: 50%;
+      transition: left 0.06s linear;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mini .mini-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 14px 18px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px) scale(0.995); }
+
+    .primary {
+      color: #05111d;
+      background: linear-gradient(135deg, var(--accent), #b9fff2);
+      box-shadow: 0 12px 30px rgba(110, 231, 255, 0.28);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .status {
+      margin-top: 8px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      color: #dbe7ff;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+      min-height: 48px;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.93rem;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(100% - 20px, 1100px); padding-top: 20px; }
+      .panel-inner { padding: 16px; }
+      .hero-display { height: 220px; }
+      .stats, .meta-grid { grid-template-columns: 1fr; }
+      .hero { margin-bottom: 14px; }
+      .badge { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="title-block">
+        <h1>Detector de <span style="color: var(--accent)">frecuencia</span> y <span style="color: var(--accent-2)">nota</span></h1>
+        
+      </div>
+      
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-inner">
+          <div class="hero-display">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="center-readout">
+              <div class="center-label">Lectura principal</div>
+              <div class="center-freq" id="heroFreq">-- Hz</div>
+              <div class="center-note" id="heroNote">Esperando señal</div>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Frecuencia</div>
+              <div class="value" id="freq">-- Hz</div>
+            </div>
+            <div class="stat">
+              <div class="label">Nota</div>
+              <div class="value" id="nearest">--</div>
+            </div>
+            <div class="stat">
+              <div class="label">Cents</div>
+              <div class="value" id="centsText">0 cents</div>
+            </div>
+            <div class="stat">
+              <div class="label">Nivel</div>
+              <div class="value" id="level">0%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-inner big-card">
+          <div class="note-card">
+            <div class="kicker">Nota</div>
+            <div class="note-main">
+              <div id="note">--</div>
+              <div id="octave"></div>
+            </div>
+
+            <div class="meter-wrap">
+              <div class="meter-head">
+                <span>-</span><span>0</span><span>+</span>
+              </div>
+              <div class="meter">
+                <div class="needle" id="needle"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div class="mini">
+              <div class="label">Precisión</div>
+              <div class="mini-value" id="confidence">--</div>
+            </div>
+            <div class="mini">
+              <div class="label">Referencia</div>
+              <div class="mini-value">440 Hz</div>
+            </div>
+            <div class="mini">
+              <div class="label">Micrófono</div>
+              <div class="mini-value" id="state">Inactivo</div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="primary" id="startBtn">Activar micrófono</button>
+            <button class="secondary" id="stopBtn">Detener</button>
+          </div>
+
+          <div class="status" id="status">Listo</div>
+
+          
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+    const freqEl = document.getElementById('freq');
+    const heroFreqEl = document.getElementById('heroFreq');
+    const heroNoteEl = document.getElementById('heroNote');
+    const nearestEl = document.getElementById('nearest');
+    const centsEl = document.getElementById('centsText');
+    const levelEl = document.getElementById('level');
+    const noteEl = document.getElementById('note');
+    const octaveEl = document.getElementById('octave');
+    const needleEl = document.getElementById('needle');
+    const confidenceEl = document.getElementById('confidence');
+    const stateEl = document.getElementById('state');
+    const statusEl = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const A4 = 440;
+
+    let audioContext = null;
+    let analyser = null;
+    let source = null;
+    let stream = null;
+    let animationId = null;
+    let timeData = null;
+    let isRunning = false;
+    let heldReading = null;
+
+    const HOLD_MS = 2200;
+    const MIN_CLARITY = 0.55;
+    const MIN_LEVEL = 0.035;
+
+    
+
+    function setStatus(message) {
+      statusEl.innerHTML = message;
+    }
+
+    function noteFromFrequency(freq) {
+      return Math.round(12 * Math.log2(freq / A4) + 69);
+    }
+
+    function frequencyFromNoteNumber(note) {
+      return A4 * Math.pow(2, (note - 69) / 12);
+    }
+
+    function centsOff(freq, note) {
+      return Math.round(1200 * Math.log2(freq / frequencyFromNoteNumber(note)));
+    }
+
+    function noteName(noteNumber) {
+      const name = NOTE_NAMES[noteNumber % 12];
+      const octave = Math.floor(noteNumber / 12) - 1;
+      return { name, octave };
+    }
+
+    function getRMS(buf) {
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) {
+        const v = (buf[i] - 128) / 128;
+        sum += v * v;
+      }
+      return Math.sqrt(sum / buf.length);
+    }
+
+    function autoCorrelate(buf, sampleRate) {
+      const SIZE = buf.length;
+      const samples = new Float32Array(SIZE);
+
+      for (let i = 0; i < SIZE; i++) {
+        samples[i] = (buf[i] - 128) / 128;
+      }
+
+      let rms = 0;
+      for (let i = 0; i < SIZE; i++) rms += samples[i] * samples[i];
+      rms = Math.sqrt(rms / SIZE);
+      if (rms < 0.01) return { frequency: null, clarity: 0 };
+
+      let r1 = 0;
+      let r2 = SIZE - 1;
+      const threshold = 0.2;
+      for (let i = 0; i < SIZE / 2; i++) {
+        if (Math.abs(samples[i]) < threshold) {
+          r1 = i;
+          break;
+        }
+      }
+      for (let i = 1; i < SIZE / 2; i++) {
+        if (Math.abs(samples[SIZE - i]) < threshold) {
+          r2 = SIZE - i;
+          break;
+        }
+      }
+
+      const clipped = samples.slice(r1, r2);
+      const newSize = clipped.length;
+      const correlations = new Array(newSize).fill(0);
+
+      for (let lag = 0; lag < newSize; lag++) {
+        let sum = 0;
+        for (let i = 0; i < newSize - lag; i++) {
+          sum += clipped[i] * clipped[i + lag];
+        }
+        correlations[lag] = sum;
+      }
+
+      let d = 0;
+      while (d + 1 < newSize && correlations[d] > correlations[d + 1]) d++;
+
+      let maxVal = -1;
+      let maxPos = -1;
+      for (let i = d; i < newSize; i++) {
+        if (correlations[i] > maxVal) {
+          maxVal = correlations[i];
+          maxPos = i;
+        }
+      }
+
+      if (maxPos <= 0) return { frequency: null, clarity: 0 };
+
+      let T0 = maxPos;
+      if (maxPos > 0 && maxPos < newSize - 1) {
+        const x1 = correlations[maxPos - 1];
+        const x2 = correlations[maxPos];
+        const x3 = correlations[maxPos + 1];
+        const a = (x1 + x3 - 2 * x2) / 2;
+        const b = (x3 - x1) / 2;
+        if (a) T0 = T0 - b / (2 * a);
+      }
+
+      const frequency = sampleRate / T0;
+      const clarity = Math.max(0, Math.min(1, maxVal / correlations[0]));
+
+      if (!Number.isFinite(frequency) || frequency < 40 || frequency > 2000) {
+        return { frequency: null, clarity: 0 };
+      }
+
+      return { frequency, clarity };
+    }
+
+    function updateUI(frequency, clarity, level) {
+      if (!frequency) {
+        freqEl.textContent = '-- Hz';
+        heroFreqEl.textContent = '-- Hz';
+        heroNoteEl.textContent = 'Esperando señal';
+        nearestEl.textContent = '--';
+        noteEl.textContent = '--';
+        octaveEl.textContent = '';
+        centsEl.textContent = '0 cents';
+        needleEl.style.left = '50%';
+        confidenceEl.textContent = '--';
+        levelEl.textContent = `${Math.round(level * 100)}%`;
+        noteEl.style.color = '#eef4ff';
+        nearestEl.style.color = '#eef4ff';
+        heroFreqEl.style.color = '#eef4ff';
+        return;
+      }
+
+      const noteNumber = noteFromFrequency(frequency);
+      const cents = centsOff(frequency, noteNumber);
+      const { name, octave } = noteName(noteNumber);
+
+      freqEl.textContent = `${frequency.toFixed(2)} Hz`;
+      heroFreqEl.textContent = `${frequency.toFixed(2)} Hz`;
+      heroNoteEl.textContent = `${name}${octave} · ${cents > 0 ? '+' : ''}${cents} cents`;
+      nearestEl.textContent = `${name}${octave}`;
+      noteEl.textContent = name;
+      octaveEl.textContent = octave;
+      centsEl.textContent = `${cents > 0 ? '+' : ''}${cents} cents`;
+      levelEl.textContent = `${Math.round(level * 100)}%`;
+      confidenceEl.textContent = `${Math.round(clarity * 100)}%`;
+
+      const diff = Math.max(-50, Math.min(50, cents));
+      const left = 50 + diff * 0.9;
+      needleEl.style.left = `${left}%`;
+
+      const absCents = Math.abs(cents);
+      let color = 'var(--bad)';
+      if (absCents < 8) color = 'var(--good)';
+      else if (absCents < 20) color = 'var(--warn)';
+
+      noteEl.style.color = color;
+      nearestEl.style.color = color;
+      heroFreqEl.style.color = color;
+    }
+
+    function getDisplayReading(rawFrequency, clarity, level) {
+      const now = performance.now();
+      const isGoodReading = rawFrequency && clarity >= MIN_CLARITY && level >= MIN_LEVEL;
+
+      if (isGoodReading) {
+        if (!heldReading) {
+          heldReading = { frequency: rawFrequency, clarity, timestamp: now };
+        } else {
+          heldReading.frequency = heldReading.frequency * 0.72 + rawFrequency * 0.28;
+          heldReading.clarity = Math.max(clarity, heldReading.clarity * 0.88);
+          heldReading.timestamp = now;
+        }
+        return heldReading;
+      }
+
+      if (heldReading && now - heldReading.timestamp < HOLD_MS) {
+        return heldReading;
+      }
+
+      return null;
+    }
+
+    function render() {
+      if (!isRunning || !analyser) return;
+
+      analyser.getByteTimeDomainData(timeData);
+      const { frequency, clarity } = autoCorrelate(timeData, audioContext.sampleRate);
+      const level = Math.min(1, getRMS(timeData) * 3.2);
+      const displayReading = getDisplayReading(frequency, clarity, level);
+
+      if (displayReading) {
+        updateUI(displayReading.frequency, displayReading.clarity, level);
+      } else {
+        updateUI(null, 0, level);
+      }
+
+      animationId = requestAnimationFrame(render);
+    }
+
+    async function start() {
+      try {
+        if (isRunning) return;
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+
+        audioContext = new AudioCtx();
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.15;
+
+        source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        timeData = new Uint8Array(analyser.fftSize);
+        isRunning = true;
+        stateEl.textContent = 'Escuchando';
+        setStatus('Escuchando');
+
+        render();
+      } catch (error) {
+        console.error(error);
+        stateEl.textContent = 'Error';
+        setStatus('Sin acceso al micrófono');
+      }
+    }
+
+    function stop() {
+      isRunning = false;
+      heldReading = null;
+      stateEl.textContent = 'Inactivo';
+
+      if (animationId) cancelAnimationFrame(animationId);
+      animationId = null;
+
+      if (source) {
+        try { source.disconnect(); } catch (_) {}
+        source = null;
+      }
+
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+
+      analyser = null;
+      timeData = null;
+
+      updateUI(null, 0, 0);
+      setStatus('Detenido');
+    }
+
+    startBtn.addEventListener('click', start);
+    stopBtn.addEventListener('click', stop);
+
+    
+  </script>
+</body>
+</html>
