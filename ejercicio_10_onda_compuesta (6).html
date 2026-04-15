@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ejercicio 10 — Onda en dos alambres</title>
+  <style>
+    :root{
+      --bg1:#0f172a;
+      --bg2:#111827;
+      --panel:#0b1220cc;
+      --card:#111827dd;
+      --text:#e5eefc;
+      --muted:#9fb2d8;
+      --accent:#60a5fa;
+      --accent2:#22c55e;
+      --accent3:#f59e0b;
+      --grid:rgba(255,255,255,0.08);
+      --line1:#4f7cff;
+      --line2:#35c46b;
+      --join:#f59e0b;
+      --danger:#fb7185;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(96,165,250,0.18), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(34,197,94,0.12), transparent 30%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    .wrap{
+      width:min(1300px, 96vw);
+      margin:18px auto;
+      display:grid;
+      grid-template-columns: 380px 1fr;
+      gap:18px;
+    }
+
+    .panel, .main{
+      background:var(--panel);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel{
+      padding:18px 18px 10px;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:1.6rem;
+      line-height:1.15;
+      letter-spacing:-0.02em;
+    }
+
+    .subtitle{
+      color:var(--muted);
+      margin:0 0 18px;
+      font-size:0.96rem;
+      line-height:1.45;
+    }
+
+    .group{
+      margin-bottom:14px;
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.06);
+    }
+
+    .group-title{
+      font-weight:700;
+      margin-bottom:10px;
+      font-size:0.98rem;
+      color:#f8fbff;
+    }
+
+    .control{ margin:12px 0 16px; }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:6px;
+    }
+
+    label{
+      font-size:0.94rem;
+      color:#dbe8ff;
+    }
+
+    .value{
+      font-variant-numeric: tabular-nums;
+      color:var(--accent3);
+      font-weight:700;
+      min-width:78px;
+      text-align:right;
+      font-size:0.93rem;
+    }
+
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+      cursor:pointer;
+    }
+
+    .main{
+      padding:14px;
+      display:grid;
+      grid-template-rows:auto auto 1fr auto;
+      gap:12px;
+      min-height:760px;
+    }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      padding:6px 6px 0;
+    }
+
+    .chips{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.08);
+      color:#dce8ff;
+      font-size:0.9rem;
+    }
+
+    .legend{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      padding:0 6px;
+      color:var(--muted);
+      font-size:0.92rem;
+    }
+
+    .legend-item{display:flex; align-items:center; gap:8px;}
+    .swatch{width:18px; height:4px; border-radius:999px;}
+
+    .canvas-card{
+      position:relative;
+      border-radius:20px;
+      overflow:hidden;
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border:1px solid rgba(255,255,255,0.06);
+    }
+
+    canvas{
+      display:block;
+      width:100%;
+      height:100%;
+      min-height:480px;
+    }
+
+    .info-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(120px, 1fr));
+      gap:10px;
+    }
+
+    .info{
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:16px;
+      padding:10px 12px;
+    }
+
+    .info .k{
+      color:var(--muted);
+      font-size:0.82rem;
+      margin-bottom:4px;
+    }
+    .info .v{
+      font-size:1.02rem;
+      font-weight:700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .footer-note{
+      color:var(--muted);
+      font-size:0.88rem;
+      line-height:1.45;
+      padding:0 4px 4px;
+    }
+
+    button{
+      background:linear-gradient(135deg, var(--accent), #3b82f6);
+      color:white;
+      border:none;
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 18px rgba(59,130,246,0.25);
+    }
+
+    button.secondary{
+      background:rgba(255,255,255,0.05);
+      box-shadow:none;
+      border:1px solid rgba(255,255,255,0.08);
+      color:#eaf2ff;
+    }
+
+    .btns{ display:flex; gap:8px; flex-wrap:wrap; }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns:1fr; }
+      .main{ min-height:auto; }
+      .info-grid{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <h1>Ejercicio 10</h1>
+      <p class="subtitle">
+        Visualización interactiva de una onda transversal en un alambre compuesto: aluminio a la izquierda y acero a la derecha. La fuente excita el extremo izquierdo con movimiento sinusoidal y se observa cómo la frecuencia de excitación modifica el patrón resultante en la unión.
+      </p>
+
+      <div class="group">
+        <div class="group-title">Parámetros de excitación</div>
+
+        <div class="control">
+          <div class="row">
+            <label for="freq">Frecuencia</label>
+            <div class="value" id="freqVal"></div>
+          </div>
+          <input id="freq" type="range" min="1" max="1000" step="1" value="120" />
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <label for="amp">Amplitud</label>
+            <div class="value" id="ampVal"></div>
+          </div>
+          <input id="amp" type="range" min="2" max="60" step="0.5" value="24" />
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <label for="timeScale">Dilatación temporal</label>
+            <div class="value" id="timeScaleVal"></div>
+          </div>
+          <input id="timeScale" type="range" min="0.02" max="1.50" step="0.01" value="0.12" />
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <label for="tension">Tensión</label>
+            <div class="value" id="tensionVal"></div>
+          </div>
+          <input id="tension" type="range" min="0" max="200" step="1" value="98" />
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Geometría</div>
+
+        <div class="control">
+          <div class="row">
+            <label for="L1">Longitud L₁ (aluminio)</label>
+            <div class="value" id="L1Val"></div>
+          </div>
+          <input id="L1" type="range" min="0.50" max="1.00" step="0.001" value="0.600" />
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <label for="L2">Longitud L₂ (acero)</label>
+            <div class="value" id="L2Val"></div>
+          </div>
+          <input id="L2" type="range" min="0.50" max="1.00" step="0.001" value="0.866" />
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Densidades de masa</div>
+
+        <div class="control">
+          <div class="row">
+            <label for="rho1">Aluminio ρ₁</label>
+            <div class="value" id="rho1Val"></div>
+          </div>
+          <input id="rho1" type="range" min="1.0" max="10.0" step="0.01" value="2.60" />
+        </div>
+
+        <div class="control">
+          <div class="row">
+            <label for="rho2">Acero ρ₂</label>
+            <div class="value" id="rho2Val"></div>
+          </div>
+          <input id="rho2" type="range" min="1.0" max="10.0" step="0.01" value="7.80" />
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Acciones rápidas</div>
+        <div class="btns">
+          <button id="playPause">Pausar</button>
+          <button id="reset" class="secondary">Reiniciar</button>
+          <button id="preset1" class="secondary">Valores del ejercicio</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="main">
+      <div class="topbar">
+        <div class="chips">
+          <div class="chip">Extremo izquierdo excitado</div>
+          <div class="chip">Unión entre medios visible</div>
+          <div class="chip">Extremo derecho fijo</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--line1)"></span> Tramo de aluminio</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--line2)"></span> Tramo de acero</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--join)"></span> Unión L₁</div>
+      </div>
+
+      <div class="canvas-card">
+        <canvas id="sim"></canvas>
+      </div>
+
+      <div class="info-grid">
+        <div class="info"><div class="k">Velocidad en Al</div><div class="v" id="c1Box"></div></div>
+        <div class="info"><div class="k">Velocidad en Ac</div><div class="v" id="c2Box"></div></div>
+        <div class="info"><div class="k">μ₁ lineal</div><div class="v" id="mu1Box"></div></div>
+        <div class="info"><div class="k">μ₂ lineal</div><div class="v" id="mu2Box"></div></div>
+        <div class="info"><div class="k">Relación λ₁ / 2L₁</div><div class="v" id="ratio1Box"></div></div>
+        <div class="info"><div class="k">Relación λ₂ / 2L₂</div><div class="v" id="ratio2Box"></div></div>
+      </div>
+
+      <div class="footer-note">
+        Modelo didáctico: la cuerda se resuelve numéricamente en tiempo real con una ecuación de onda 1D por tramos. El extremo izquierdo se excita sinusoidalmente y el extremo derecho permanece fijo. Las densidades ingresadas son volumétricas en g/cm³ y se convierten internamente a densidad lineal usando un área transversal fija de 0.01 cm².
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+
+    const controls = {
+      freq: document.getElementById('freq'),
+      amp: document.getElementById('amp'),
+      timeScale: document.getElementById('timeScale'),
+      tension: document.getElementById('tension'),
+      L1: document.getElementById('L1'),
+      L2: document.getElementById('L2'),
+      rho1: document.getElementById('rho1'),
+      rho2: document.getElementById('rho2')
+    };
+
+    const readouts = {
+      freq: document.getElementById('freqVal'),
+      amp: document.getElementById('ampVal'),
+      timeScale: document.getElementById('timeScaleVal'),
+      tension: document.getElementById('tensionVal'),
+      L1: document.getElementById('L1Val'),
+      L2: document.getElementById('L2Val'),
+      rho1: document.getElementById('rho1Val'),
+      rho2: document.getElementById('rho2Val'),
+      c1Box: document.getElementById('c1Box'),
+      c2Box: document.getElementById('c2Box'),
+      mu1Box: document.getElementById('mu1Box'),
+      mu2Box: document.getElementById('mu2Box'),
+      ratio1Box: document.getElementById('ratio1Box'),
+      ratio2Box: document.getElementById('ratio2Box')
+    };
+
+    const AREA_CM2 = 0.01;
+    const GCM_TO_KGM = 0.1;
+    const N = 420;
+    const CFL = 0.9;
+    let running = true;
+    let t = 0;
+    let lastTs = 0;
+
+    let y = new Float64Array(N);
+    let yPrev = new Float64Array(N);
+    let yNext = new Float64Array(N);
+    let cArr = new Float64Array(N);
+    let xArr = new Float64Array(N);
+
+    function val(id){ return parseFloat(controls[id].value); }
+    function fmt(x, d=2){ return Number(x).toFixed(d); }
+
+    function resizeCanvas(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+
+    function totalLength(){ return val('L1') + val('L2'); }
+
+    function buildMedium(){
+      const L1 = val('L1');
+      const L2 = val('L2');
+      const L = L1 + L2;
+      const rho1Vol = val('rho1');
+      const rho2Vol = val('rho2');
+      const tension = val('tension');
+
+      const mu1 = rho1Vol * AREA_CM2 * GCM_TO_KGM;
+      const mu2 = rho2Vol * AREA_CM2 * GCM_TO_KGM;
+      const c1 = Math.sqrt(Math.max(0.0001, tension) / mu1);
+      const c2 = Math.sqrt(Math.max(0.0001, tension) / mu2);
+
+      for(let i=0;i<N;i++){
+        const x = L * i / (N - 1);
+        xArr[i] = x;
+        cArr[i] = x <= L1 ? c1 : c2;
+      }
+
+      readouts.c1Box.textContent = `${fmt(c1)} m/s`;
+      readouts.c2Box.textContent = `${fmt(c2)} m/s`;
+      readouts.mu1Box.textContent = `${fmt(mu1,4)} kg/m`;
+      readouts.mu2Box.textContent = `${fmt(mu2,4)} kg/m`;
+
+      const f = val('freq');
+      const lambda1 = c1 / f;
+      const lambda2 = c2 / f;
+      readouts.ratio1Box.textContent = fmt(lambda1 / (2 * L1), 2);
+      readouts.ratio2Box.textContent = fmt(lambda2 / (2 * L2), 2);
+    }
+
+    function syncLabels(){
+      readouts.freq.textContent = `${fmt(val('freq'),0)} Hz`;
+      readouts.amp.textContent = `${fmt(val('amp'),1)} px`;
+      readouts.timeScale.textContent = `${fmt(val('timeScale'),2)}×`;
+      readouts.tension.textContent = `${fmt(val('tension'),0)} N`;
+      readouts.L1.textContent = `${fmt(100*val('L1'),1)} cm`;
+      readouts.L2.textContent = `${fmt(100*val('L2'),1)} cm`;
+      readouts.rho1.textContent = `${fmt(val('rho1'),2)} g/cm³`;
+      readouts.rho2.textContent = `${fmt(val('rho2'),2)} g/cm³`;
+      buildMedium();
+    }
+
+    function resetState(){
+      y.fill(0);
+      yPrev.fill(0);
+      yNext.fill(0);
+      t = 0;
+    }
+
+    function updatePhysics(dtReal){
+      const simDtReal = dtReal * val('timeScale');
+      const L = totalLength();
+      const dx = L / (N - 1);
+      let cMax = 0;
+      for(let i=0;i<N;i++) if(cArr[i] > cMax) cMax = cArr[i];
+      const safeDt = Math.max(1e-6, CFL * dx / Math.max(cMax, 1e-6));
+      const steps = Math.max(1, Math.ceil(simDtReal / safeDt));
+      const dtSub = simDtReal / steps;
+
+      for(let s=0; s<steps; s++){
+        t += dtSub;
+        const A = val('amp');
+        const f = val('freq');
+
+        for(let i=1;i<N-1;i++){
+          const r = (cArr[i] * dtSub / dx);
+          yNext[i] = 2*y[i] - yPrev[i] + r*r * (y[i+1] - 2*y[i] + y[i-1]);
+        }
+
+        // Extremo izquierdo excitado
+        yNext[0] = A * Math.sin(2*Math.PI*f*t);
+
+        // Extremo derecho fijo
+        yNext[N-1] = 0;
+
+        for(let i=1;i<N-1;i++) yNext[i] *= 0.9997;
+
+        [yPrev, y, yNext] = [y, yNext, yPrev];
+      }
+    }
+
+    function draw(){
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0,0,w,h);
+
+      // fondo
+      const bg = ctx.createLinearGradient(0,0,0,h);
+      bg.addColorStop(0,'rgba(255,255,255,0.035)');
+      bg.addColorStop(1,'rgba(255,255,255,0.01)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,w,h);
+
+      const mid = h*0.52;
+      const L1 = val('L1');
+      const L = totalLength();
+      const xJoin = (L1 / L) * w;
+
+      // grilla
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      for(let i=0;i<=10;i++){
+        const x = i*w/10;
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,h);
+        ctx.stroke();
+      }
+      for(let j=0;j<=8;j++){
+        const yLine = j*h/8;
+        ctx.beginPath();
+        ctx.moveTo(0,yLine);
+        ctx.lineTo(w,yLine);
+        ctx.stroke();
+      }
+
+      // línea de equilibrio
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, mid);
+      ctx.lineTo(w, mid);
+      ctx.stroke();
+
+      // unión
+      ctx.strokeStyle = 'rgba(245,158,11,0.95)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8,6]);
+      ctx.beginPath();
+      ctx.moveTo(xJoin, 0);
+      ctx.lineTo(xJoin, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // etiquetas superiores
+      ctx.fillStyle = 'rgba(229,238,252,0.92)';
+      ctx.font = '600 16px Inter, sans-serif';
+      ctx.fillText('L₁', Math.max(8, xJoin*0.5 - 10), 28);
+      ctx.fillText('L₂', Math.min(w-30, xJoin + (w-xJoin)*0.5 - 10), 28);
+
+      // tramo aluminio
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--line1').trim();
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      let started1 = false;
+      for(let i=0;i<N;i++){
+        const px = (xArr[i]/L)*w;
+        if(px > xJoin) break;
+        const py = mid - y[i];
+        if(!started1){ ctx.moveTo(px,py); started1 = true; }
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+
+      // tramo acero
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--line2').trim();
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      let started2 = false;
+      for(let i=0;i<N;i++){
+        const px = (xArr[i]/L)*w;
+        if(px < xJoin) continue;
+        const py = mid - y[i];
+        if(!started2){ ctx.moveTo(px,py); started2 = true; }
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+
+      // puntos especiales
+      const sourceY = mid - y[0];
+      const joinIndex = Math.round((N-1) * L1 / L);
+      const joinY = mid - y[Math.min(N-1, Math.max(0, joinIndex))];
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(0, sourceY, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--join').trim();
+      ctx.beginPath(); ctx.arc(xJoin, joinY, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#e5eefc';
+      ctx.beginPath(); ctx.arc(w, mid, 5, 0, Math.PI*2); ctx.fill();
+
+      // texto
+      ctx.font = '600 14px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(229,238,252,0.95)';
+      ctx.fillText('Fuente', 12, Math.max(20, sourceY - 10));
+      ctx.fillText('Unión', Math.min(w-70, xJoin + 10), Math.max(20, joinY - 10));
+      ctx.fillText('Fijo', Math.max(10, w - 38), mid - 12);
+
+      // zona sombreada por material
+      ctx.fillStyle = 'rgba(79,124,255,0.05)';
+      ctx.fillRect(0,0,xJoin,h);
+      ctx.fillStyle = 'rgba(53,196,107,0.05)';
+      ctx.fillRect(xJoin,0,w-xJoin,h);
+
+      // nombres materiales
+      ctx.font = '700 18px Georgia, serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText('Aluminio', Math.max(14, xJoin*0.35 - 40), h - 18);
+      ctx.fillText('Acero', Math.min(w-70, xJoin + (w-xJoin)*0.4 - 20), h - 18);
+    }
+
+    function animate(ts){
+      if(!lastTs) lastTs = ts;
+      const dt = Math.min(0.02, (ts - lastTs)/1000);
+      lastTs = ts;
+      if(running) updatePhysics(dt);
+      draw();
+      requestAnimationFrame(animate);
+    }
+
+    Object.values(controls).forEach(el => {
+      el.addEventListener('input', () => {
+        syncLabels();
+        buildMedium();
+      });
+    });
+
+    document.getElementById('playPause').addEventListener('click', e => {
+      running = !running;
+      e.target.textContent = running ? 'Pausar' : 'Reanudar';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      resetState();
+    });
+
+    document.getElementById('preset1').addEventListener('click', () => {
+      controls.freq.value = 360;
+      controls.amp.value = 24;
+      controls.timeScale.value = 0.20;
+      controls.tension.value = 98;
+      controls.L1.value = 0.600;
+      controls.L2.value = 0.866;
+      controls.rho1.value = 2.60;
+      controls.rho2.value = 7.80;
+      syncLabels();
+      resetState();
+    });
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      draw();
+    });
+
+    resizeCanvas();
+    syncLabels();
+    resetState();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
